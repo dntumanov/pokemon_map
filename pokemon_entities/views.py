@@ -1,15 +1,15 @@
 import folium
-import json
 
-from django.http import HttpResponseNotFound
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 
+from pokemon_entities.models import Pokemon, PokemonEntity
 
 MOSCOW_CENTER = [55.751244, 37.618423]
 DEFAULT_IMAGE_URL = "https://vignette.wikia.nocookie.net/pokemon/images/6/6e/%21.png/revision/latest/fixed-aspect-ratio-down/width/240/height/240?cb=20130525215832&fill=transparent"
 
 
 def add_pokemon(folium_map, lat, lon, image_url=DEFAULT_IMAGE_URL):
+    """Отображение покемона на карте"""
     icon = folium.features.CustomIcon(
         image_url,
         icon_size=(50, 50),
@@ -22,44 +22,61 @@ def add_pokemon(folium_map, lat, lon, image_url=DEFAULT_IMAGE_URL):
 
 
 def show_all_pokemons(request):
-    with open("pokemon_entities/pokemons.json", encoding="utf-8") as database:
-        pokemons = json.load(database)['pokemons']
+    """Возвращает всех покемонов"""
+    pokemons = Pokemon.objects.all()
+    pokemons_enity = PokemonEntity.objects.all()
 
     folium_map = folium.Map(location=MOSCOW_CENTER, zoom_start=12)
-    for pokemon in pokemons:
-        for pokemon_entity in pokemon['entities']:
-            add_pokemon(
-                folium_map, pokemon_entity['lat'], pokemon_entity['lon'], pokemon['img_url'])
-
-    pokemons_on_page = []
-    for pokemon in pokemons:
-        pokemons_on_page.append({
-            'pokemon_id': pokemon['pokemon_id'],
-            'img_url': pokemon['img_url'],
-            'title_ru': pokemon['title_ru'],
-        })
+    for pokemon_enity in pokemons_enity:
+        image_path = request.build_absolute_uri(pokemon_enity.pokemon.get_image_absolute_url)
+        add_pokemon(
+            folium_map, pokemon_enity.lat,
+            pokemon_enity.lon,
+            image_path)
 
     return render(request, "mainpage.html", context={
         'map': folium_map._repr_html_(),
-        'pokemons': pokemons_on_page,
+        'pokemons': pokemons,
     })
 
 
 def show_pokemon(request, pokemon_id):
-    with open("pokemon_entities/pokemons.json", encoding="utf-8") as database:
-        pokemons = json.load(database)['pokemons']
+    """Возвращает подробную информацию об одном покемоне"""
+    pokemon = get_object_or_404(Pokemon, id=pokemon_id)
+    pokemon_enity = get_object_or_404(PokemonEntity, pokemon__id=pokemon_id)
 
-    for pokemon in pokemons:
-        if pokemon['pokemon_id'] == int(pokemon_id):
-            requested_pokemon = pokemon
-            break
-    else:
-        return HttpResponseNotFound('<h1>Такой покемон не найден</h1>')
-
+    pokemon_view_on_page = {
+        'pokemon_id': pokemon.id,
+        'img_url': pokemon.image.url,
+        'title_ru': pokemon.title_ru,
+        'description': pokemon.description,
+        'title_en': pokemon.title_en,
+        'title_jp': pokemon.title_jp,
+    }
+    image_path = request.build_absolute_uri(pokemon_enity.pokemon.get_image_absolute_url)
     folium_map = folium.Map(location=MOSCOW_CENTER, zoom_start=12)
-    for pokemon_entity in requested_pokemon['entities']:
-        add_pokemon(
-            folium_map, pokemon_entity['lat'], pokemon_entity['lon'], pokemon['img_url'])
+
+    add_pokemon(
+        folium_map, pokemon_enity.lat,
+        pokemon_enity.lon,
+        image_path)
+
+    # Из кого эваолюионировал
+    if pokemon.previous_evolution:
+        pokemon_view_on_page['previous_evolution'] = {
+            'pokemon_id': pokemon.previous_evolution.id,
+            'img_url': pokemon.previous_evolution.image.url,
+            'title_ru': pokemon.previous_evolution.title_ru
+        }
+
+    # В кого эваолюионировал
+    if pokemon.next_evolution.all():
+        pokemon = pokemon.next_evolution.all().first()
+        pokemon_view_on_page['next_evolution'] = {
+            'pokemon_id': pokemon.id,
+            'img_url': pokemon.image.url,
+            'title_ru': pokemon.title_ru
+        }
 
     return render(request, "pokemon.html", context={'map': folium_map._repr_html_(),
-                                                    'pokemon': pokemon})
+                                                    'pokemon': pokemon_view_on_page})
