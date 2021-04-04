@@ -1,6 +1,14 @@
 from django.db import models
 
 
+class PokemonElementType(models.Model):
+    """Стихии покемона"""
+    title = models.CharField(max_length=50, verbose_name='Стихия для покемона')
+
+    def __str__(self):
+        return '{}'.format(self.title)
+
+
 class Pokemon(models.Model):
     """Описание покенома"""
     title_ru = models.CharField(max_length=200, verbose_name='Имя покемона на русском', default='покемон')
@@ -11,6 +19,7 @@ class Pokemon(models.Model):
         verbose_name='Описание покемона', default='', null=False, blank=True)
     previous_evolution = models.ForeignKey('Pokemon', null=True, blank=True, on_delete=models.SET_NULL,
                                            related_name='next_evolution', verbose_name='Из кого эволюционировал')
+    elements_type = models.ManyToManyField(PokemonElementType)
 
     @property
     def get_image_absolute_url(self):
