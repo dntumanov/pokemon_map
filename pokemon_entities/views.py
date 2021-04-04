@@ -8,7 +8,7 @@ MOSCOW_CENTER = [55.751244, 37.618423]
 DEFAULT_IMAGE_URL = "https://vignette.wikia.nocookie.net/pokemon/images/6/6e/%21.png/revision/latest/fixed-aspect-ratio-down/width/240/height/240?cb=20130525215832&fill=transparent"
 
 
-def add_pokemon(folium_map, lat, lon, image_url=DEFAULT_IMAGE_URL):
+def add_pokemon(folium_map, name, lat, lon, image_url=DEFAULT_IMAGE_URL):
     """Отображение покемона на карте"""
     icon = folium.features.CustomIcon(
         image_url,
@@ -18,21 +18,21 @@ def add_pokemon(folium_map, lat, lon, image_url=DEFAULT_IMAGE_URL):
         [lat, lon],
         # Warning! `tooltip` attribute is disabled intentionally to fix strange folium cyrillic encoding bug
         icon=icon,
+        tooltip=name
     ).add_to(folium_map)
 
 
 def show_all_pokemons(request):
     """Возвращает всех покемонов"""
     pokemons = Pokemon.objects.all()
-    pokemons_enity = PokemonEntity.objects.all()
 
     folium_map = folium.Map(location=MOSCOW_CENTER, zoom_start=12)
-    for pokemon_enity in pokemons_enity:
-        image_path = request.build_absolute_uri(pokemon_enity.pokemon.get_image_absolute_url)
-        add_pokemon(
-            folium_map, pokemon_enity.lat,
-            pokemon_enity.lon,
-            image_path)
+    for pokemon in pokemons:
+        pokemon_entitys = PokemonEntity.objects.filter(pokemon=pokemon)
+        for pokemon_entity in pokemon_entitys:
+            add_pokemon(
+                folium_map, pokemon.title_ru, pokemon_entity.lat, pokemon_entity.lon,
+                request.build_absolute_uri(pokemon.image.url))
 
     return render(request, "mainpage.html", context={
         'map': folium_map._repr_html_(),
@@ -52,12 +52,15 @@ def show_pokemon(request, pokemon_id):
         'description': pokemon.description,
         'title_en': pokemon.title_en,
         'title_jp': pokemon.title_jp,
+        # FIXME: Поправить стихии
+        'elements_type': pokemon.elements_type
     }
     image_path = request.build_absolute_uri(pokemon_enity.pokemon.get_image_absolute_url)
     folium_map = folium.Map(location=MOSCOW_CENTER, zoom_start=12)
 
     add_pokemon(
-        folium_map, pokemon_enity.lat,
+        folium_map, pokemon.title_ru,
+        pokemon_enity.lat,
         pokemon_enity.lon,
         image_path)
 

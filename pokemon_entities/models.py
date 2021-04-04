@@ -4,6 +4,7 @@ from django.db import models
 class PokemonElementType(models.Model):
     """Стихии покемона"""
     title = models.CharField(max_length=50, verbose_name='Стихия для покемона')
+    icon = models.ImageField(upload_to='element_type_icons', null=True, blank=True, verbose_name='Иконка стихии')
 
     def __str__(self):
         return '{}'.format(self.title)
