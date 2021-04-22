@@ -18,8 +18,6 @@ def add_pokemon(folium_map, lat, lon, image_url=DEFAULT_IMAGE_URL):
     )
     folium.Marker(
         [lat, lon],
-        # Warning! `tooltip` attribute is disabled intentionally
-        # to fix strange folium cyrillic encoding bug
         icon=icon,
     ).add_to(folium_map)
 
@@ -66,7 +64,6 @@ def show_pokemon(request, pokemon_id):
         pokemon_enity.lon,
         image_path)
 
-    # Из кого эваолюионировал
     if pokemon.previous_evolution:
         pokemon_view_on_page['previous_evolution'] = {
             'pokemon_id': pokemon.previous_evolution.id,
@@ -74,7 +71,6 @@ def show_pokemon(request, pokemon_id):
             'title_ru': pokemon.previous_evolution.title_ru
         }
 
-    # В кого эваолюионировал
     if pokemon.next_evolution.all():
         pokemon = pokemon.next_evolution.all().first()
         pokemon_view_on_page['next_evolution'] = {

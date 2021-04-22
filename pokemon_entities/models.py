@@ -1,6 +1,5 @@
 from django.db import models
 
-
 class Pokemon(models.Model):
     """Описание покенома"""
     title_ru = models.CharField(
@@ -21,7 +20,7 @@ class Pokemon(models.Model):
 
     @property
     def get_image_absolute_url(self):
-        """Возвращает абсолютный путь к картинке"""
+        """Возвращает путь к картинке для ее отображения"""
         if self.image:
             image_url = self.image.url
             return image_url
@@ -33,7 +32,7 @@ class Pokemon(models.Model):
 class PokemonEntity(models.Model):
     """Описание свойст покемона"""
     pokemon = models.ForeignKey(
-        Pokemon, on_delete=models.CASCADE, verbose_name='Покемон')
+        Pokemon, on_delete=models.CASCADE, verbose_name='Покемон', related_name='pokemon')
     lat = models.FloatField(verbose_name='Координаты покемона: широта')
     lon = models.FloatField(verbose_name='Координаты покемона: долгота')
     appeared_at = models.DateTimeField('Появился в')
