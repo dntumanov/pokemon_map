@@ -8,8 +8,8 @@ class Pokemon(models.Model):
     title_jp = models.CharField(max_length=200, blank=True, verbose_name='Имя покемона на японском')
     image = models.ImageField(upload_to='pokemons', null=True, blank=True, verbose_name='Ваставьте картинку для покемона')
     description = models.TextField(
-        verbose_name='Описание покемона', default='', null=False, blank=True)
-    previous_evolution = models.ForeignKey('Pokemon', null=True, blank=True, on_delete=models.SET_NULL,
+        verbose_name='Описание покемона', blank=True)
+    previous_evolution = models.ForeignKey('Pokemon', null=True, on_delete=models.SET_NULL,
                                            related_name='next_evolution', verbose_name='Из кого эволюционировал')
 
     @property
